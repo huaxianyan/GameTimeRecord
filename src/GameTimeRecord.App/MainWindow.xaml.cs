@@ -45,21 +45,29 @@ public partial class MainWindow : Window
         });
     }
 
-    protected override async void OnClosing(CancelEventArgs e)
+    protected override void OnClosing(CancelEventArgs e)
     {
         if (_closeAllowed)
         {
+            _clockTimer.Stop();
+            _noticeTimer.Stop();
             base.OnClosing(e);
             return;
         }
 
         e.Cancel = true;
+        base.OnClosing(e);
         if (_closeCheckRunning)
         {
             return;
         }
 
         _closeCheckRunning = true;
+        _ = Dispatcher.InvokeAsync(CheckBeforeClosingAsync, DispatcherPriority.Normal);
+    }
+
+    private async Task CheckBeforeClosingAsync()
+    {
         try
         {
             var playingGames = await _viewModel.GetPlayingGameNamesAsync();

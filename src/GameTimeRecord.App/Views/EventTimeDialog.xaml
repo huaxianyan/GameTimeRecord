@@ -1,0 +1,17 @@
+<Window x:Class="GameTimeRecord.App.Views.EventTimeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="修改记录时间"
+        Width="420"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="24">
+        <TextBlock Text="时间（年-月-日 时:分:秒）" />
+        <TextBox x:Name="TimeBox" Margin="0,8,0,18" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Width="88" Margin="0,0,8,0" IsCancel="True" Content="取消" />
+            <Button Width="88" IsDefault="True" Click="Save_Click" Content="保存" />
+        </StackPanel>
+    </StackPanel>
+</Window>

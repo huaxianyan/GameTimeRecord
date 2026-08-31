@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GameTimeRecord.App/GameTimeRecord.App.csproj" />
+    <Project Path="src/GameTimeRecord.Core/GameTimeRecord.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GameTimeRecord.Tests/GameTimeRecord.Tests.csproj" />
+  </Folder>
+</Solution>

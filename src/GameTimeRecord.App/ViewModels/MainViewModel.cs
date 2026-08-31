@@ -20,7 +20,7 @@ public sealed class MainViewModel(SqliteGameRepository repository) : ObservableO
 
     public ObservableCollection<Game> Games { get; } = [];
 
-    public ObservableCollection<PlayEventRow> PlayEvents { get; } = [];
+    public ObservableCollection<PlaySessionGroupViewModel> PlaySessionGroups { get; } = [];
 
     public Game? SelectedGame
     {
@@ -204,7 +204,12 @@ public sealed class MainViewModel(SqliteGameRepository repository) : ObservableO
 
     public void RefreshLiveStatistics()
     {
-        ApplyStatistics();
+        var nowUtcSeconds = UtcNowSeconds();
+        ApplyStatistics(nowUtcSeconds);
+        foreach (var group in PlaySessionGroups)
+        {
+            group.RefreshDuration(nowUtcSeconds);
+        }
     }
 
     public async Task<IReadOnlyList<string>> GetPlayingGameNamesAsync()
@@ -235,19 +240,27 @@ public sealed class MainViewModel(SqliteGameRepository repository) : ObservableO
         _sessions = SelectedGame is null
             ? []
             : await repository.GetSessionsAsync(SelectedGame.Id);
-        PlayEvents.Clear();
+        PlaySessionGroups.Clear();
 
         for (var sessionIndex = _sessions.Count - 1; sessionIndex >= 0; sessionIndex--)
         {
             var session = _sessions[sessionIndex];
-            foreach (var playEvent in session.Events.Reverse())
-            {
-                PlayEvents.Add(new PlayEventRow(
+            var sessionStatus = PlaySessionRules.GetStatus(session.Events);
+            var eventRows = session.Events
+                .Select((playEvent, eventIndex) => new PlayEventRow(
                     playEvent.Id,
-                    sessionIndex + 1,
                     GetEventName(playEvent.Type),
-                    FormatTimestamp(playEvent.TimestampUtcSeconds)));
-            }
+                    FormatTimestamp(playEvent.TimestampUtcSeconds),
+                    eventIndex == session.Events.Count - 1))
+                .ToArray();
+            PlaySessionGroups.Add(new PlaySessionGroupViewModel(
+                session,
+                sessionIndex + 1,
+                GetStatusName(sessionStatus),
+                FormatTimestamp(session.Events[0].TimestampUtcSeconds),
+                eventRows,
+                isExpanded: sessionIndex == _sessions.Count - 1,
+                UtcNowSeconds()));
         }
 
         var unfinished = _sessions.LastOrDefault(session =>
@@ -266,12 +279,12 @@ public sealed class MainViewModel(SqliteGameRepository repository) : ObservableO
         };
         OnPropertyChanged(nameof(CanStart));
         OnPropertyChanged(nameof(CanEnd));
-        ApplyStatistics();
+        ApplyStatistics(UtcNowSeconds());
     }
 
-    private void ApplyStatistics()
+    private void ApplyStatistics(long nowUtcSeconds)
     {
-        var statistics = GameStatisticsCalculator.Calculate(_sessions, UtcNowSeconds());
+        var statistics = GameStatisticsCalculator.Calculate(_sessions, nowUtcSeconds);
         TotalSeconds = statistics.TotalSeconds.ToString(CultureInfo.InvariantCulture);
         PlayCount = statistics.PlayCount.ToString(CultureInfo.InvariantCulture);
         FirstPlayedAt = FormatTimestamp(statistics.FirstPlayedAtUtcSeconds);
@@ -305,10 +318,67 @@ public sealed class MainViewModel(SqliteGameRepository repository) : ObservableO
         PlayEventType.End => "结束",
         _ => throw new InvalidOperationException("未知的游玩记录类型。"),
     };
+
+    private static string GetStatusName(PlaySessionStatus status) => status switch
+    {
+        PlaySessionStatus.Playing => "正在游玩",
+        PlaySessionStatus.Paused => "已暂停",
+        PlaySessionStatus.Ended => "已结束",
+        _ => throw new InvalidOperationException("未知的游玩状态。"),
+    };
+}
+
+public sealed class PlaySessionGroupViewModel : ObservableObject
+{
+    private readonly PlaySession _session;
+    private string _durationText;
+
+    public PlaySessionGroupViewModel(
+        PlaySession session,
+        int sessionNumber,
+        string status,
+        string startedAt,
+        IReadOnlyList<PlayEventRow> events,
+        bool isExpanded,
+        long nowUtcSeconds)
+    {
+        _session = session;
+        SessionNumber = sessionNumber;
+        Status = status;
+        StartedAt = startedAt;
+        Events = events;
+        IsExpanded = isExpanded;
+        _durationText = FormatDuration(nowUtcSeconds);
+    }
+
+    public int SessionNumber { get; }
+
+    public string Status { get; }
+
+    public string StartedAt { get; }
+
+    public IReadOnlyList<PlayEventRow> Events { get; }
+
+    public bool IsExpanded { get; }
+
+    public string DurationText
+    {
+        get => _durationText;
+        private set => SetProperty(ref _durationText, value);
+    }
+
+    public void RefreshDuration(long nowUtcSeconds)
+    {
+        DurationText = FormatDuration(nowUtcSeconds);
+    }
+
+    private string FormatDuration(long nowUtcSeconds) =>
+        PlaySessionRules.CalculateDurationSeconds(_session.Events, nowUtcSeconds)
+            .ToString(CultureInfo.InvariantCulture) + " 秒";
 }
 
 public sealed record PlayEventRow(
     long EventId,
-    int SessionNumber,
     string Action,
-    string LocalTime);
+    string LocalTime,
+    bool IsLast);

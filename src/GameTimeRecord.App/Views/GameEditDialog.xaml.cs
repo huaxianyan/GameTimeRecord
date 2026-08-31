@@ -31,12 +31,10 @@ public partial class GameEditDialog : Window
     {
         if (string.IsNullOrWhiteSpace(GameName))
         {
-            MessageBox.Show(
+            AppDialog.ShowMessage(
                 this,
-                "请填写游戏名称。",
                 "无法保存",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                "请填写游戏名称。");
             NameBox.Focus();
             return;
         }

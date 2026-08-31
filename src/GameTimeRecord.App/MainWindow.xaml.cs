@@ -73,12 +73,10 @@ public partial class MainWindow : Window
             var playingGames = await _viewModel.GetPlayingGameNamesAsync();
             if (playingGames.Count > 0)
             {
-                MessageBox.Show(
+                AppDialog.ShowMessage(
                     this,
-                    $"请先暂停或结束以下游戏：\n\n{string.Join("\n", playingGames)}",
                     "仍有游戏正在计时",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    $"请先暂停或结束以下游戏：\n\n{string.Join("\n", playingGames)}");
                 return;
             }
 
@@ -155,13 +153,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        var result = MessageBox.Show(
+        var confirmed = AppDialog.Confirm(
             this,
-            $"确定要删除《{game.Name}》及其全部游玩记录吗？",
             "删除游戏",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-        if (result != MessageBoxResult.Yes)
+            $"确定要删除《{game.Name}》及其全部游玩记录吗？",
+            "删除");
+        if (!confirmed)
         {
             return;
         }
@@ -185,23 +182,10 @@ public partial class MainWindow : Window
     private async void End_Click(object sender, RoutedEventArgs e) =>
         await RunAsync(_viewModel.EndAsync);
 
-    private void ToggleHistory_Click(object sender, RoutedEventArgs e)
-    {
-        var showHistory = HistoryPanel.Visibility != Visibility.Visible;
-        HistoryPanel.Visibility = showHistory ? Visibility.Visible : Visibility.Collapsed;
-        HistoryButton.Content = showHistory ? "收起游玩记录" : "游玩记录详情";
-    }
-
     private async void EditEvent_Click(object sender, RoutedEventArgs e)
     {
-        if (EventsGrid.SelectedItem is not PlayEventRow row)
+        if (sender is not FrameworkElement { Tag: PlayEventRow row })
         {
-            MessageBox.Show(
-                this,
-                "请先选择一条游玩记录。",
-                "修改记录时间",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
             return;
         }
 
@@ -261,11 +245,10 @@ public partial class MainWindow : Window
 
     private void ShowError(Exception exception)
     {
-        MessageBox.Show(
+        AppDialog.ShowMessage(
             this,
-            exception.Message,
             "操作未完成",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+            exception.Message,
+            AppDialogKind.Error);
     }
 }

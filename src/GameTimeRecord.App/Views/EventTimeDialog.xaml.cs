@@ -27,12 +27,10 @@ public partial class EventTimeDialog : Window
                 DateTimeStyles.AllowWhiteSpaces,
                 out _))
         {
-            MessageBox.Show(
+            AppDialog.ShowMessage(
                 this,
-                "请按“年-月-日 时:分:秒”的格式填写时间。",
                 "无法保存",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                "请按“年-月-日 时:分:秒”的格式填写时间。");
             TimeBox.Focus();
             return;
         }

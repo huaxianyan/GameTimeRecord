@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using GameTimeRecord.App.Data;
 using GameTimeRecord.App.ViewModels;
+using GameTimeRecord.App.Views;
 
 namespace GameTimeRecord.App;
 
@@ -14,11 +15,11 @@ public partial class App : Application
         var localData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         if (string.IsNullOrWhiteSpace(localData))
         {
-            MessageBox.Show(
-                "无法确定本地数据保存位置，请检查 Windows 用户配置后重试。",
+            AppDialog.ShowMessage(
+                owner: null,
                 "无法启动",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+                "无法确定本地数据保存位置，请检查 Windows 用户配置后重试。",
+                AppDialogKind.Error);
             Shutdown(1);
             return;
         }

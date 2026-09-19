@@ -1,6 +1,7 @@
 <Window x:Class="GameTimeRecord.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:GameTimeRecord.App.Controls"
         xmlns:converters="clr-namespace:GameTimeRecord.App.Converters"
         Title="游戏时间记录"
         Width="1180"
@@ -33,6 +34,54 @@
             <Setter Property="MinHeight" Value="28" />
             <Setter Property="Padding" Value="9,3" />
             <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style TargetType="controls:CopyStatisticButton">
+            <Setter Property="Width" Value="48" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="Padding" Value="4,3" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="controls:CopyStatisticButton">
+                        <Border x:Name="Shell"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <TextBlock x:Name="Label"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       Text="复制" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="State" Value="Done">
+                                <Setter TargetName="Shell" Property="Background" Value="#E8F4EE" />
+                                <Setter TargetName="Shell" Property="BorderBrush" Value="#A7D6BE" />
+                                <Setter TargetName="Label" Property="Text" Value="已复制" />
+                                <Setter TargetName="Label" Property="Foreground" Value="#16794A" />
+                                <Setter TargetName="Label" Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Shell" Property="Opacity" Value="0.92" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Shell" Property="Opacity" Value="0.82" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Shell" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="StatisticCard" TargetType="Border">
@@ -165,7 +214,6 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0" Margin="0,0,0,22">
@@ -235,10 +283,8 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <DockPanel>
-                            <Button DockPanel.Dock="Right"
-                                    Style="{StaticResource CompactButton}"
-                                    Click="CopyTotal_Click"
-                                    Content="复制" />
+                            <controls:CopyStatisticButton DockPanel.Dock="Right"
+                                                          Click="CopyTotal_Click" />
                             <TextBlock VerticalAlignment="Center"
                                        Foreground="{StaticResource SecondaryTextBrush}"
                                        Text="累计时长（秒）" />
@@ -259,10 +305,8 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <DockPanel>
-                            <Button DockPanel.Dock="Right"
-                                    Style="{StaticResource CompactButton}"
-                                    Click="CopyCount_Click"
-                                    Content="复制" />
+                            <controls:CopyStatisticButton DockPanel.Dock="Right"
+                                                          Click="CopyCount_Click" />
                             <TextBlock VerticalAlignment="Center"
                                        Foreground="{StaticResource SecondaryTextBrush}"
                                        Text="游玩次数" />
@@ -283,11 +327,9 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <DockPanel>
-                            <Button DockPanel.Dock="Right"
-                                    Style="{StaticResource CompactButton}"
-                                    Click="CopyFirst_Click"
-                                    Content="复制"
-                                    IsEnabled="{Binding CanCopyFirstPlayedAt}" />
+                            <controls:CopyStatisticButton DockPanel.Dock="Right"
+                                                          Click="CopyFirst_Click"
+                                                          IsEnabled="{Binding CanCopyFirstPlayedAt}" />
                             <TextBlock VerticalAlignment="Center"
                                        Foreground="{StaticResource SecondaryTextBrush}"
                                        Text="首次游玩" />
@@ -308,11 +350,9 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <DockPanel>
-                            <Button DockPanel.Dock="Right"
-                                    Style="{StaticResource CompactButton}"
-                                    Click="CopyLast_Click"
-                                    Content="复制"
-                                    IsEnabled="{Binding CanCopyLastPlayedAt}" />
+                            <controls:CopyStatisticButton DockPanel.Dock="Right"
+                                                          Click="CopyLast_Click"
+                                                          IsEnabled="{Binding CanCopyLastPlayedAt}" />
                             <TextBlock VerticalAlignment="Center"
                                        Foreground="{StaticResource SecondaryTextBrush}"
                                        Text="最后游玩" />
@@ -493,13 +533,6 @@
                     </Grid>
                 </Grid>
             </Border>
-
-            <TextBlock x:Name="NoticeText"
-                       Grid.Row="4"
-                       Margin="0,12,0,0"
-                       HorizontalAlignment="Right"
-                       Foreground="#16794A"
-                       FontWeight="SemiBold" />
         </Grid>
     </Grid>
 </Window>

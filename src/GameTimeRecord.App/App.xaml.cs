@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 using GameTimeRecord.App.Data;
 using GameTimeRecord.App.ViewModels;
 using GameTimeRecord.App.Views;
@@ -11,6 +12,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
 
         var localData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         if (string.IsNullOrWhiteSpace(localData))
@@ -32,5 +34,17 @@ public partial class App : Application
         var window = new MainWindow(new MainViewModel(repository));
         MainWindow = window;
         window.Show();
+    }
+
+    private void OnDispatcherUnhandledException(
+        object sender,
+        DispatcherUnhandledExceptionEventArgs e)
+    {
+        e.Handled = true;
+        AppDialog.ShowMessage(
+            MainWindow,
+            "出现未处理的错误",
+            e.Exception.Message,
+            AppDialogKind.Error);
     }
 }

@@ -26,6 +26,7 @@ publish/
 # Logs and local data
 *.log
 .local/
+.workbuddy/
 
 # OS metadata
 .DS_Store

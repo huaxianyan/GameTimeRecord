@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using System.Windows.Threading;
+using GameTimeRecord.App.Controls;
 using GameTimeRecord.App.ViewModels;
 using GameTimeRecord.App.Views;
 using GameTimeRecord.Core;
@@ -12,7 +14,8 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly DispatcherTimer _clockTimer;
-    private readonly DispatcherTimer _noticeTimer;
+    private readonly DispatcherTimer _copyResetTimer;
+    private CopyStatisticButton? _notifiedCopyButton;
     private bool _selectionChanging;
     private bool _closeCheckRunning;
     private bool _closeAllowed;
@@ -27,12 +30,9 @@ public partial class MainWindow : Window
         _clockTimer.Tick += (_, _) => _viewModel.RefreshLiveStatistics();
         _clockTimer.Start();
 
-        _noticeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-        _noticeTimer.Tick += (_, _) =>
-        {
-            NoticeText.Text = string.Empty;
-            _noticeTimer.Stop();
-        };
+        // 「已复制」在按钮上停留几秒就收回去。
+        _copyResetTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _copyResetTimer.Tick += (_, _) => ResetCopyNotice();
     }
 
     protected override async void OnContentRendered(EventArgs e)
@@ -50,7 +50,7 @@ public partial class MainWindow : Window
         if (_closeAllowed)
         {
             _clockTimer.Stop();
-            _noticeTimer.Stop();
+            _copyResetTimer.Stop();
             base.OnClosing(e);
             return;
         }
@@ -197,23 +197,54 @@ public partial class MainWindow : Window
     }
 
     private void CopyTotal_Click(object sender, RoutedEventArgs e) =>
-        CopyStatistic(_viewModel.TotalSeconds);
+        CopyStatistic(sender as CopyStatisticButton, _viewModel.TotalSeconds);
 
     private void CopyCount_Click(object sender, RoutedEventArgs e) =>
-        CopyStatistic(_viewModel.PlayCount);
+        CopyStatistic(sender as CopyStatisticButton, _viewModel.PlayCount);
 
     private void CopyFirst_Click(object sender, RoutedEventArgs e) =>
-        CopyStatistic(_viewModel.FirstPlayedAt);
+        CopyStatistic(sender as CopyStatisticButton, _viewModel.FirstPlayedAt);
 
     private void CopyLast_Click(object sender, RoutedEventArgs e) =>
-        CopyStatistic(_viewModel.LastPlayedAt);
+        CopyStatistic(sender as CopyStatisticButton, _viewModel.LastPlayedAt);
 
-    private void CopyStatistic(string value)
+    private void CopyStatistic(CopyStatisticButton? button, string value)
     {
-        Clipboard.SetText(value);
-        NoticeText.Text = "已复制";
-        _noticeTimer.Stop();
-        _noticeTimer.Start();
+        if (button is null)
+        {
+            return;
+        }
+
+        // 上一次的「已复制」先收回去，免得两个按钮同时挂着提示。
+        ResetCopyNotice();
+
+        var owner = new WindowInteropHelper(this).Handle;
+        var result = ClipboardWriter.Write(owner, value, out var failureDetail);
+
+        if (result == ClipboardWriteResult.Failed)
+        {
+            AppDialog.ShowMessage(this, "复制失败", failureDetail, AppDialogKind.Error);
+            return;
+        }
+
+        button.State = CopyButtonState.Done;
+        _notifiedCopyButton = button;
+        _copyResetTimer.Stop();
+        _copyResetTimer.Start();
+    }
+
+    /// <summary>
+    /// 把按钮上的「已复制」收回成普通的「复制」。提示按几秒的节奏自动收回，
+    /// 用户不等提示结束就点下一个按钮时也会先走这里。
+    /// </summary>
+    private void ResetCopyNotice()
+    {
+        _copyResetTimer.Stop();
+        if (_notifiedCopyButton is { } button)
+        {
+            button.State = CopyButtonState.Idle;
+            _notifiedCopyButton = null;
+        }
     }
 
     private async Task ReloadGamesAndSelectionAsync(long gameId)

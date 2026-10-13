@@ -35,6 +35,10 @@ dotnet test tests/GameTimeRecord.Tests/GameTimeRecord.Tests.csproj -c Release
 ./scripts/publish-windows.ps1
 ```
 
+## 开发交接
+
+当前主线、剪贴板故障边界和 SDK 匹配待办见 [交接记录](docs/STATUS.md)。
+
 ## 项目结构
 
 - `src/GameTimeRecord.Core`：游玩会话规则和统计计算
